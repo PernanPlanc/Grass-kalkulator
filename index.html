@@ -3,82 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediksi Harga Coin Grass</title>
+    <title>Query Processor</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
+            background: #f5f5f5;
         }
-        h1 {
-            color: #2c3e50;
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        label, select, button {
-            display: block;
-            margin: 15px 0;
+        .input-group {
+            margin-bottom: 20px;
         }
-        .result {
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            background: #0366d6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0255b3;
+        }
+        #results {
             margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #2c3e50;
-            border-radius: 5px;
-            background-color: #ecf0f1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .timer {
+            font-size: 1.2em;
+            color: #0366d6;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-
-    <h1>Prediksi Harga Coin Grass</h1>
-    <p>Pilih koin pembanding untuk menghitung prediksi harga koin Grass dengan total supply 1 miliar token.</p>
-
-    <label for="comparisonCoin">Pilih Koin Pembanding:</label>
-    <select id="comparisonCoin">
-        <option value="not">Not (MCap: $713.39M, Supply: 102B)</option>
-        <option value="dogs">Dogs (MCap: $315.44M, Supply: 500B)</option>
-        <option value="cats">Cats (MCap: $26M, Supply: 600B)</option>
-    </select>
-
-    <button onclick="calculateGrassPrice()">Hitung Prediksi Harga Koin Grass</button>
-
-    <div id="result" class="result" style="display: none;"></div>
+    <div class="container">
+        <h1>Query Processor</h1>
+        <div class="input-group">
+            <h3>Enter Queries (one per line)</h3>
+            <textarea id="queryInput" placeholder="Enter your queries here..."></textarea>
+        </div>
+        <div class="input-group">
+            <button onclick="processQueries()">Process Queries</button>
+            <button onclick="clearResults()">Clear</button>
+        </div>
+        <div id="timer" class="timer"></div>
+        <div id="results"></div>
+    </div>
 
     <script>
-        // Data perbandingan market cap dan supply
-        const coins = {
-            not: { marketCap: 713390000, supply: 102000000 },
-            dogs: { marketCap: 315440000, supply: 500000000 },
-            cats: { marketCap: 26000000, supply: 600000000 }
-        };
+        let timerInterval;
+        let secondsLeft = 0;
 
-        // Fungsi untuk menghitung harga koin berdasarkan market cap dan supply
-        function calculateCoinPrice(marketCap, supply) {
-            return marketCap / supply;
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            secondsLeft = seconds;
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
         }
 
-        // Fungsi untuk menghitung prediksi harga koin Grass
-        function calculateGrassPrice() {
-            const selectedCoin = document.getElementById("comparisonCoin").value;
-            const comparisonCoin = coins[selectedCoin];
-            const grassSupply = 1000000000;  // Total supply koin Grass (1 miliar)
+        function updateTimer() {
+            if (secondsLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('timer').style.display = 'none';
+                return;
+            }
+            
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            document.getElementById('timer').textContent = 
+                `Next round in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer').style.display = 'block';
+            secondsLeft--;
+        }
 
-            // Hitung harga per koin dari koin pembanding
-            const pricePerCoin = calculateCoinPrice(comparisonCoin.marketCap, comparisonCoin.supply);
+        function processQueries() {
+            const queries = document.getElementById('queryInput').value
+                .split('\n')
+                .filter(q => q.trim() !== '');
 
-            // Proyeksi market cap Grass menggunakan harga per koin pembanding
-            const projectedMarketCap = pricePerCoin * grassSupply;
+            if (queries.length === 0) {
+                alert('Please enter at least one query');
+                return;
+            }
 
-            // Tampilkan hasil
-            const resultDiv = document.getElementById("result");
-            resultDiv.style.display = "block";
-            resultDiv.innerHTML = `
-                <strong>Prediksi Harga Koin Grass:</strong><br>
-                Berdasarkan koin <strong>${selectedCoin.toUpperCase()}</strong> dengan Market Cap <strong>$${comparisonCoin.marketCap.toLocaleString()}</strong> dan Supply <strong>${comparisonCoin.supply.toLocaleString()}</strong><br><br>
-                <strong>Harga Per Koin Grass:</strong> $${pricePerCoin.toFixed(8)}<br>
-                <strong>Market Cap Grass (dengan supply 1 miliar):</strong> $${projectedMarketCap.toLocaleString()}
-            `;
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            results.style.display = 'block';
+
+            queries.forEach((query, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.textContent = `Processing query ${index + 1}: ${query}`;
+                results.appendChild(resultItem);
+            });
+
+            startTimer(60); // Start 60 second timer
+        }
+
+        function clearResults() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            clearInterval(timerInterval);
         }
     </script>
-
 </body>
 </html>
